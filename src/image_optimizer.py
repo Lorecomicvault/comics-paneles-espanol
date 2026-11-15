@@ -12,7 +12,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 def optimize_comic_image(
     input_path: str | Path,
     output_path: str | Path | None = None,
-    for_instagram: bool = True
+    for_instagram: bool = False
 ) -> Path:
     """
     Optimizes a comic panel image for maximum visual punch on social feeds.

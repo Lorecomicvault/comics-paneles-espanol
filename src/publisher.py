@@ -187,14 +187,14 @@ def publish_comic_photo(
     platforms: list[str] | None = None,
     draft_only: bool = False
 ) -> dict:
-    """Orchestrates publishing of a comic panel across Facebook and Instagram."""
+    """Orchestrates publishing of a comic panel (configured exclusively for Facebook Page)."""
     if platforms is None:
-        platforms = ["facebook", "instagram"]
+        platforms = ["facebook"]
 
     log("===========================================================")
-    log("🚀 PUBLICADOR MULTIPLATAFORMA DE PANELES DE CÓMIC")
+    log("🚀 PUBLICADOR EXCLUSIVO DE FACEBOOK PARA PANELES DE CÓMIC")
     log(f"   Archivo: {image_path}")
-    log(f"   Plataformas: {platforms} | Modo Borrador: {draft_only}")
+    log(f"   Plataformas activas: {platforms} | Modo Borrador: {draft_only}")
     log("===========================================================")
 
     results = {}

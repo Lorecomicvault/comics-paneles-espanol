@@ -379,9 +379,9 @@ def populate_queue():
             print(f"⚠️ Imagen fuente no encontrada para {slot_name}: {src_path}")
             continue
 
-        # Optimize image with Instagram aspect ratio constraints and color grading
+        # Optimize image with cinematic color grading for Facebook
         try:
-            optimize_comic_image(src_path, img_target, for_instagram=True)
+            optimize_comic_image(src_path, img_target, for_instagram=False)
         except Exception as e:
             print(f"Error optimizando {src_path}: {e}. Copiando directo...")
             shutil.copy2(src_path, img_target)

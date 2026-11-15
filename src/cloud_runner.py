@@ -141,11 +141,12 @@ def run_cloud_step(dry_run: bool = False, draft: bool = False):
         print("-" * 50)
         return
 
-    # Execute publication
+    # Execute publication exclusively on Facebook Page
     pub_results = publish_comic_photo(
         image_path=image_file,
         caption=full_caption,
         image_url=raw_github_url,
+        platforms=["facebook"],
         draft_only=draft
     )
 
@@ -158,10 +159,10 @@ def run_cloud_step(dry_run: bool = False, draft: bool = False):
         "comic_source": meta.get("comic_source", ""),
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "social_links": {
-            "facebook": pub_results.get("facebook", {}).get("permalink"),
-            "instagram": pub_results.get("instagram", {}).get("permalink")
+            "facebook": pub_results.get("facebook", {}).get("permalink")
         },
         "status": "published",
+        "platform": "facebook",
         "caption": full_caption
     }
     ledger.append(ledger_entry)
