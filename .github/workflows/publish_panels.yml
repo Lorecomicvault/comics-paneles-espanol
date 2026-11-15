@@ -1,0 +1,94 @@
+name: Multiverso Comic - Publicador Autonomo de Paneles e Imagenes
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Modo de ejecución'
+        required: true
+        default: 'live'
+        type: choice
+        options:
+          - live
+          - dry_run
+          - draft
+
+  schedule:
+    # 10 publicaciones al día distribuidas en horas pico (Horario UTC ajustado para Latinoamérica y España)
+    # 08:00 AM (13:00 UTC) - Arranque de mañana
+    - cron: '0 13 * * *'
+    # 09:30 AM (14:30 UTC) - Media mañana
+    - cron: '30 14 * * *'
+    # 11:00 AM (16:00 UTC) - Pausa laboral
+    - cron: '0 16 * * *'
+    # 12:30 PM (17:30 UTC) - Almuerzo / Break
+    - cron: '30 17 * * *'
+    # 02:00 PM (19:00 UTC) - Sobremesa
+    - cron: '0 19 * * *'
+    # 03:30 PM (20:30 UTC) - Mitad de tarde
+    - cron: '30 20 * * *'
+    # 05:00 PM (22:00 UTC) - Salida de oficina / regreso
+    - cron: '0 22 * * *'
+    # 06:30 PM (23:30 UTC) - Hora pico tarde
+    - cron: '30 23 * * *'
+    # 08:00 PM (01:00 UTC) - Prime time nocturno
+    - cron: '0 1 * * *'
+    # 09:30 PM (02:30 UTC) - Relax nocturno
+    - cron: '30 2 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-panel:
+    name: Despachar Panel de Cómic a Redes Sociales
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Instalar Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Publicar Siguiente Panel de la Cola
+        env:
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN || 'EAAduw9ZBIaysBSVYGkNZCmRYBKHwiPpwlkZBiFxM5SNCWCBnmMLhl7SDSvUNFJXzn6xSYQBeKDNseZA3bM5cwCxcIV7L4bim7nlIU5CtgsB8gZCy82iew2MZB72Q13ODT8yBKcFrdRHXhUziR7DwOqMCoZBOcTd4whcwZByMWR4xQfqWJEl7gHZCRT3HOtZA73OMBCaZCzi' }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID || '1289410784257454' }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID || '17841427017671758' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'AIzaSyCi8Im-pmWlu786WSUnn8hPQM_aKuPeiXs' }}
+          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.mode }}" = "dry_run" ]; then
+            ARGS="--dry-run"
+          elif [ "${{ github.event.inputs.mode }}" = "draft" ]; then
+            ARGS="--draft"
+          fi
+          python src/cloud_runner.py $ARGS
+
+      - name: Sincronizar Cambios de Cola y Ledger en GitHub
+        run: |
+          git config --global user.name "Multiverso Comic Bot"
+          git config --global user.email "bot@multiversocomic.com"
+          git add published_ledger.json scheduled_queue/
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear (cola vacía o modo dry-run)."
+          else
+            git commit -m "chore(auto-publish): dispatch panel and update queue ledger [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi
